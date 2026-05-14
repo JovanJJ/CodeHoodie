@@ -7,7 +7,7 @@ const COUNTRIES = [
   { name: "Canada", code: "CA" },
   { name: "United Kingdom", code: "GB" },
   { name: "Australia", code: "AU" },
-  { name: "Israel", code: "ISR" },
+  { name: "Israel", code: "IL" },
   { name: "Serbia", code: "RS" },
   { name: "France", code: "FR" },
   { name: "Spain", code: "ES" },
@@ -32,27 +32,12 @@ export default function CountrySelect({
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [filteredCountries, setFilteredCountries] = useState(COUNTRIES);
   const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const selected = COUNTRIES.find((c) => c.code === value);
-    if (selected && !isOpen) {
-      setSearchTerm(selected.name);
-    } else if (!value && !isOpen) {
-      setSearchTerm("");
-    }
-  }, [value, isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setFilteredCountries(
-        COUNTRIES.filter((country) =>
-          country.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-    }
-  }, [searchTerm, isOpen]);
+  const selectedCountry = COUNTRIES.find((country) => country.code === value);
+  const inputValue = isOpen ? searchTerm : selectedCountry?.name ?? "";
+  const filteredCountries = COUNTRIES.filter((country) =>
+    country.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -62,7 +47,7 @@ export default function CountrySelect({
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -70,7 +55,7 @@ export default function CountrySelect({
     <div className="relative mt-2" ref={wrapperRef}>
       <input
         type="text"
-        value={searchTerm}
+        value={inputValue}
         onChange={(e) => {
           setSearchTerm(e.target.value);
           setIsOpen(true);

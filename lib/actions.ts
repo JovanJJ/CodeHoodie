@@ -1,20 +1,19 @@
 "use server"
 
-import { Pool } from "pg";
 import nodemailer from "nodemailer";
-import Stripe from "stripe";
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+import {
+  ensureOrdersSchema,
+  getPool,
+  getStripe,
+  logServerError,
+} from "./server-services";
 
 //./stripe listen --forward-to localhost:3000/api/webhook --api-key sk_test_YOUR_KEY_HERE
 
 export async function run() {
   try {
+    const pool = getPool();
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS test_data (
         id SERIAL PRIMARY KEY,
@@ -50,9 +49,6 @@ export async function run() {
 
 
 
-// Initialize Stripe with your Secret Key (sk_test_...)
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-
 export type ShippingInfo = {
   name: string;
   email: string;
@@ -76,7 +72,7 @@ export async function createPaymentIntent(selectedSize: string, selectedColor: s
       street: shippingInfo.street.trim(),
       zip: shippingInfo.zip.trim(),
       city: shippingInfo.city.trim(),
-      country: shippingInfo.country.trim(),
+      country: shippingInfo.country.trim().toUpperCase(),
     };
 
     if (
@@ -91,6 +87,15 @@ export async function createPaymentIntent(selectedSize: string, selectedColor: s
     ) {
       throw new Error("Missing required checkout information");
     }
+
+    if (!/^[A-Z]{2}$/.test(normalizedShippingInfo.country)) {
+      throw new Error("Shipping country must be a two-letter country code");
+    }
+
+    const pool = getPool();
+    const stripe = getStripe();
+
+    await ensureOrdersSchema();
 
     const sql = `
       INSERT INTO orders (
@@ -169,7 +174,7 @@ export async function createPaymentIntent(selectedSize: string, selectedColor: s
 
 
   } catch (error) {
-    console.error("Stripe Error:", error);
+    logServerError("Checkout creation failed:", error);
     throw new Error("Failed to create payment intent");
   }
 }
@@ -189,6 +194,7 @@ export async function fetchOrderNumber(intentId: string): Promise<FetchOrderNumb
     return { success: false, message: "Payment failed", orderData: null }
   }
   try {
+    const pool = getPool();
     const sql = `
     SELECT order_number, customer_email FROM orders WHERE stripe_intent_id = $1
     `
@@ -211,6 +217,7 @@ export async function fetchOrderStatus(orderNumber: string) {
     return { success: false, message: "Order number is missing" }
   }
   try {
+    const pool = getPool();
     const sql = `SELECT status FROM orders WHERE order_number = $1`;
     const res = await pool.query(sql, [orderNumber]);
     const status = res.rows[0];
@@ -303,6 +310,9 @@ export async function sendOrderNumberEmail(orderNumber: string): Promise<OrderNu
     };
   }
 
+  await ensureOrdersSchema();
+
+  const pool = getPool();
   const client = await pool.connect();
 
   try {

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from 'next/image';
+import Image, { type StaticImageData } from 'next/image';
 import { AnimatePresence } from 'framer-motion';
 import MotionWrapper from './MotionWrapper';
 import { useState } from 'react';
@@ -32,7 +32,7 @@ import hoodieGreen1 from "@/public/hoodie_green_1.jpg";
 import hoodieGreen2 from "@/public/hoodie_green_2.jpg";
 
 
-const colorImages: Record<string, any[]> = {
+const colorImages: Record<string, StaticImageData[]> = {
   Black: [hoodieBlack1, hoodieBlack2, hoodieBlack3],
   Blue: [hoodieBlue1, hoodieBlue2, hoodieBlue3],
   Green: [hoodieGreen1, hoodieGreen2],
