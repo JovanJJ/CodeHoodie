@@ -20,6 +20,9 @@
 # production
 /build
 
+/stripe.exe
+
+.exe
 # misc
 .DS_Store
 *.pem
