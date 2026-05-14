@@ -1,19 +1,24 @@
 "use server"
 
 import nodemailer from "nodemailer";
-import {
-  ensureOrdersSchema,
-  getPool,
-  getStripe,
-  logServerError,
-} from "./server-services";
+import { Pool } from "pg";
+import Stripe from "stripe";
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const PRODUCT_NAME = "T-SHIRT BLACK&WHITE BLA BLA";
+const TSHIRT_PRICE = 2500;
 
 //./stripe listen --forward-to localhost:3000/api/webhook --api-key sk_test_YOUR_KEY_HERE
 
 export async function run() {
   try {
-    const pool = getPool();
-
     await pool.query(`
       CREATE TABLE IF NOT EXISTS test_data (
         id SERIAL PRIMARY KEY,
@@ -58,14 +63,15 @@ export type ShippingInfo = {
   country: string;
 };
 
-export async function createPaymentIntent(selectedSize: string, selectedColor: string, shippingInfo: ShippingInfo) {
-
+export async function createPaymentIntent(
+  selectedSize: string,
+  selectedColor: string,
+  shippingInfo: ShippingInfo
+) {
   try {
-    //ORDER DRAFT
-    const PRODUCT_NAME = "T-SHIRT BLACK&WHITE BLA BLA";
-    const TSHIRT_PRICE = 2500;
     const orderNumber = `ORD-${Date.now()}`;
-    const status = "DRAFT";
+    const size = selectedSize.trim();
+    const color = selectedColor.trim();
     const normalizedShippingInfo = {
       name: shippingInfo.name.trim(),
       email: shippingInfo.email.trim(),
@@ -76,8 +82,8 @@ export async function createPaymentIntent(selectedSize: string, selectedColor: s
     };
 
     if (
-      !selectedSize.trim() ||
-      !selectedColor.trim() ||
+      !size ||
+      !color ||
       !normalizedShippingInfo.name ||
       !normalizedShippingInfo.email ||
       !normalizedShippingInfo.street ||
@@ -92,12 +98,8 @@ export async function createPaymentIntent(selectedSize: string, selectedColor: s
       throw new Error("Shipping country must be a two-letter country code");
     }
 
-    const pool = getPool();
-    const stripe = getStripe();
-
-    await ensureOrdersSchema();
-
-    const sql = `
+    await pool.query(
+      `
       INSERT INTO orders (
         status,
         order_number,
@@ -112,30 +114,26 @@ export async function createPaymentIntent(selectedSize: string, selectedColor: s
         postal_code,
         country_code
       ) VALUES ($1::public.order_status, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-    `;
+    `,
+      [
+        "DRAFT",
+        orderNumber,
+        PRODUCT_NAME,
+        size,
+        color,
+        TSHIRT_PRICE,
+        normalizedShippingInfo.email,
+        normalizedShippingInfo.name,
+        normalizedShippingInfo.street,
+        normalizedShippingInfo.city,
+        normalizedShippingInfo.zip,
+        normalizedShippingInfo.country,
+      ]
+    );
 
-    await pool.query(sql, [
-      status,
-      orderNumber,
-      PRODUCT_NAME,
-      selectedSize,
-      selectedColor,
-      TSHIRT_PRICE,
-      normalizedShippingInfo.email,
-      normalizedShippingInfo.name,
-      normalizedShippingInfo.street,
-      normalizedShippingInfo.city,
-      normalizedShippingInfo.zip,
-      normalizedShippingInfo.country,
-    ]);
-
-
-
-
-    // 2. Create the PaymentIntent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: TSHIRT_PRICE,
-      currency: "usd", // or "eur"
+      currency: "usd",
       receipt_email: normalizedShippingInfo.email,
       shipping: {
         name: normalizedShippingInfo.name,
@@ -146,35 +144,28 @@ export async function createPaymentIntent(selectedSize: string, selectedColor: s
           country: normalizedShippingInfo.country,
         },
       },
-      // 3. Add Metadata: This is super useful for your Order Tracking later!
       metadata: {
         order_number: orderNumber,
-        size: selectedSize,
-        color: selectedColor,
+        size,
+        color,
       },
-      // Optional: This allows the payment element to automatically detect available payment methods
       automatic_payment_methods: {
         enabled: true,
       },
     });
-    const stripeIntentId = paymentIntent.id;
-    //console.log("here", stripeIntentId);
+
     if (!paymentIntent.client_secret) {
       throw new Error("Stripe did not return a client secret");
     }
 
     await pool.query(
       "UPDATE orders SET stripe_intent_id = $1 WHERE order_number = $2",
-      [stripeIntentId, orderNumber]
+      [paymentIntent.id, orderNumber]
     );
-    //console.log("2", paymentIntent.client_secret);
 
-    // 4. Return only the Client Secret to the frontend
     return { clientSecret: paymentIntent.client_secret };
-
-
   } catch (error) {
-    logServerError("Checkout creation failed:", error);
+    console.error("Checkout creation failed:", error);
     throw new Error("Failed to create payment intent");
   }
 }
@@ -194,7 +185,6 @@ export async function fetchOrderNumber(intentId: string): Promise<FetchOrderNumb
     return { success: false, message: "Payment failed", orderData: null }
   }
   try {
-    const pool = getPool();
     const sql = `
     SELECT order_number, customer_email FROM orders WHERE stripe_intent_id = $1
     `
@@ -217,7 +207,6 @@ export async function fetchOrderStatus(orderNumber: string) {
     return { success: false, message: "Order number is missing" }
   }
   try {
-    const pool = getPool();
     const sql = `SELECT status FROM orders WHERE order_number = $1`;
     const res = await pool.query(sql, [orderNumber]);
     const status = res.rows[0];
@@ -310,17 +299,10 @@ export async function sendOrderNumberEmail(orderNumber: string): Promise<OrderNu
     };
   }
 
-  await ensureOrdersSchema();
-
-  const pool = getPool();
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
-    await client.query(`
-      ALTER TABLE orders
-      ADD COLUMN IF NOT EXISTS order_number_email_sent_at TIMESTAMP
-    `);
 
     const result = await client.query<OrderEmailRow>(
       `

@@ -22,16 +22,36 @@ function shouldUseSsl(connectionString: string) {
   return !connectionString.includes("localhost") && !connectionString.includes("127.0.0.1");
 }
 
+function assertDeployableDatabaseUrl(connectionString: string) {
+  let host = "";
+
+  try {
+    host = new URL(connectionString).hostname;
+  } catch {
+    return;
+  }
+
+  if (process.env.VERCEL && /^db\.[^.]+\.supabase\.co$/.test(host)) {
+    throw new Error(
+      "DATABASE_URL uses the Supabase direct database host. Vercel Functions cannot reliably connect to that IPv6-only host; use the Supabase Supavisor transaction pooler connection string instead."
+    );
+  }
+}
+
 export function getPool() {
   if (!pool) {
     const connectionString = getRequiredEnv("DATABASE_URL");
+    assertDeployableDatabaseUrl(connectionString);
 
     pool = new Pool({
       connectionString,
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 10000,
+      max: 1,
       ssl: shouldUseSsl(connectionString)
         ? {
-            rejectUnauthorized: false,
-          }
+          rejectUnauthorized: false,
+        }
         : undefined,
     });
   }
