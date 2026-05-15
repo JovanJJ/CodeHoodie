@@ -31,7 +31,7 @@ export default function Hero() {
             </ScrollButton>
           </div>
 
-          {/* Right Column (Image Container) */}
+          {/* Right Column*/}
           <div className="relative w-full aspect-square lg:aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl">
             <Image
               src={heroImage}

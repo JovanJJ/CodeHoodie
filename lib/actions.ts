@@ -15,7 +15,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const PRODUCT_NAME = "T-SHIRT BLACK&WHITE BLA BLA";
 const TSHIRT_PRICE = 2500;
 
-//./stripe listen --forward-to localhost:3000/api/webhook --api-key sk_test_YOUR_KEY_HERE
+
 
 export async function run() {
   try {
@@ -362,7 +362,7 @@ export async function sendOrderNumberEmail(orderNumber: string): Promise<OrderNu
           <p style="font-size: 20px; font-weight: 700; letter-spacing: 0.04em;">
             ${escapeHtml(order.order_number)}
           </p>
-          <p>You can use this number to track your order on our website.</p>
+          <p>You can use this number to track your order on our website, <a href="https://code-hoodie.vercel.app/tracking">Track on this link</a></p>
         </div>
       `,
     });

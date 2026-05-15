@@ -59,7 +59,7 @@ export default function CountrySelect({
         onChange={(e) => {
           setSearchTerm(e.target.value);
           setIsOpen(true);
-          onChange(""); // Clear the value if user is typing
+          onChange("");
         }}
         onFocus={() => {
           setIsOpen(true);
@@ -77,7 +77,7 @@ export default function CountrySelect({
                 key={country.code}
                 className="cursor-pointer px-4 py-2 text-sm font-semibold hover:bg-[#6B403C]/10"
                 onMouseDown={(e) => {
-                  e.preventDefault(); // Prevent input from losing focus immediately
+                  e.preventDefault();
                   onChange(country.code);
                   setSearchTerm(country.name);
                   setIsOpen(false);

@@ -1,4 +1,5 @@
 import { fetchOrderStatus } from "@/lib/actions";
+import Image from "next/image";
 
 type OrderStatus = "PROCESSING" | "SHIPPED" | "DELIVERED" | "PAID";
 
@@ -41,7 +42,7 @@ export default async function TrackingPage(props: {
       <div className="w-full max-w-5xl">
         <h1 className="mb-8 text-center text-3xl font-bold text-[#6B403C]">Order Tracking</h1>
 
-        {/* Tracking Input */}
+
         <div className="mx-auto mb-16 max-w-md">
           <form action="/tracking" method="GET" className="relative flex items-center">
             <input
@@ -51,10 +52,8 @@ export default async function TrackingPage(props: {
               placeholder="Enter your order number (e.g. ORD-12345)"
               className="w-full rounded-full border-2 border-gray-100 bg-white px-6 py-4 pr-12 shadow-sm outline-none transition-all focus:border-[#ADEBB3] focus:ring-4 focus:ring-[#ADEBB3]/20"
             />
-            <button type="submit" className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#6B403C] text-white transition-colors hover:bg-[#6B403C]/80">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
+            <button type="submit" className="absolute cursor-pointer right-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#6B403C] text-white transition-colors hover:bg-[#6B403C]/80">
+              <Image src="/search.svg" alt="search icon" width={22} height={22} />
             </button>
           </form>
           {orderNumber && currentStatus === "PROCESSING" && (
@@ -64,7 +63,7 @@ export default async function TrackingPage(props: {
           )}
         </div>
 
-        {/* Status Grid */}
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {statuses.map((status) => {
             const isCurrentOrPassed =
@@ -80,22 +79,11 @@ export default async function TrackingPage(props: {
                 className={`flex flex-col items-center justify-start rounded-[2.5rem] bg-white p-8 text-center shadow-lg transition-all hover:shadow-xl ${isCurrent ? 'ring-2 ring-[#ADEBB3] ring-offset-4' : ''
                   }`}
               >
-                {/* Icon/Checkmark area */}
+
                 <div className="mb-6 flex-shrink-0">
                   {isCurrent ? (
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#ADEBB3]/20">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="h-10 w-10 text-[#ADEBB3]"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                      <Image src="/done.svg" alt="search icon" width={22} height={22} />
                     </div>
                   ) : (
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-50">
