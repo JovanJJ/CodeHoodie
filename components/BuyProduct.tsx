@@ -135,15 +135,11 @@ export default function BuyProduct() {
           <div className="flex gap-4 mt-2 justify-center lg:justify-start">
             <button
               onClick={prevImage}
-              className="w-12 h-12 rounded-full border-2 border-[#6B403C] flex items-center justify-center text-[#6B403C] hover:bg-[#6B403C] hover:text-white transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-              </svg>
+              className="w-12 h-12 rounded-full border-2 border-[#6B403C] flex items-center justify-center text-[#6B403C] hover:bg-gray-200 hover:text-white transition-all cursor-pointer">
+              <Image src="/arrow-left.svg" alt='left' width={20} height={20} />
             </button>
-            <button onClick={nextImage} className="w-12 h-12 rounded-full border-2 border-[#6B403C] flex items-center justify-center text-[#6B403C] hover:bg-[#6B403C] hover:text-white transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
+            <button onClick={nextImage} className="w-12 h-12 rounded-full border-2 border-[#6B403C] flex items-center justify-center text-[#6B403C] hover:bg-gray-200 hover:text-white transition-all cursor-pointer">
+              <Image src="/arrow-right.svg" alt='left' width={20} height={20} />
             </button>
           </div>
 
@@ -160,15 +156,11 @@ export default function BuyProduct() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 text-[#F3D266]">
                       {Array.from({ length: testimonial.rating }).map((_, i) => (
-                        <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                          <path d="M12 2.25l2.99 6.06 6.69.97-4.84 4.72 1.14 6.66L12 17.52l-5.98 3.14 1.14-6.66-4.84-4.72 6.69-.97L12 2.25z" />
-                        </svg>
+                        <Image key={i} src="/star.svg" alt='star' width={19} height={19} />
                       ))}
                     </div>
                     <p className="text-xs font-bold text-[#6B403C] opacity-80 flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-[#2f7d46]">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
+                      <Image src="/done.svg" alt='done' width={15} height={15} />
                       Verified Buyer
                     </p>
                   </div>
@@ -187,20 +179,17 @@ export default function BuyProduct() {
             <div className="mb-3 flex items-center gap-2" aria-label="Rated 4.8 out of 5 stars">
               <div className="flex gap-1 text-[#F3D266]" aria-hidden="true">
                 {Array.from({ length: 5 }).map((_, index) => (
-                  <svg
-                    key={index}
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="h-5 w-5"
-                  >
-                    <path d="M12 2.25l2.99 6.06 6.69.97-4.84 4.72 1.14 6.66L12 17.52l-5.98 3.14 1.14-6.66-4.84-4.72 6.69-.97L12 2.25z" />
-                  </svg>
+                  <Image key={index} src="/star.svg" alt='star' width={19} height={19} />
                 ))}
               </div>
               <span className="text-sm font-bold text-[#6B403C]/75">4.8 (124 reviews)</span>
             </div>
-            <p className="text-xl font-semibold opacity-80">{productPrice}</p>
+            <div className='flex gap-3'>
+              <div className='relative'>
+                <span className="text-xl font-semibold opacity-60 line-through">$22.99</span>
+              </div>
+              <p className="text-xl font-semibold opacity-80">{productPrice}</p>
+            </div>
           </div>
 
           <div className="space-y-4">
